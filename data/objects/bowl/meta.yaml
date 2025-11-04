@@ -1,12 +1,30 @@
 
 name: bowl
-category: [kitchenware]
-mass: 0.2
-color: [0.2 0.8 0.2]
+category: [kitchenware, container]
+mass: 0.18
+dimensions: [0.12, 0.12, 0.06]
+color: [0.2, 0.8, 0.2]
+material: ceramic
 mujoco:
   xml_path: mujoco_bowl.xml
+  scale: 1.0
+  friction: [1.2, 0.005, 0.0001]
 isaac:
   usd_path: bowl.usd
+  physics_material: ceramic
+  collision_group: -1
 perception:
   ycb:
-    aliases: ["bowl", "Bowl"]
+    aliases: ["bowl", "Bowl", "green bowl", "cereal bowl"]
+    id: 66
+  coco:
+    aliases: ["bowl"]
+    category_id: 45
+policy:
+  grasping:
+    affordances: [lift, pour, scoop]
+    preferred_grasp_type: two_handed
+    difficulty: medium
+  manipulation:
+    stable_poses: [upright]
+    stackable: true

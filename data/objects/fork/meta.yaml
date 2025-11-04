@@ -1,0 +1,52 @@
+name: fork
+category: [utensil, tool, metal]
+mass: 0.08
+dimensions: [0.18, 0.015, 0.005]
+color: [0.7, 0.7, 0.75]
+material: stainless_steel
+safety:
+  sharp: true
+  point_count: 4
+  requires_caution: true
+mujoco:
+  xml_path: mujoco_fork.xml
+  scale: 1.0
+  friction: [1.2, 0.05, 0.01]
+  damping: [0.15, 0.15, 0.15]
+isaac:
+  usd_path: fork.usd
+  physics_material: metal
+  collision_group: 1
+  rendering:
+    roughness: 0.2
+    metallic: 0.9
+perception:
+  ycb:
+    aliases: ["fork", "Fork", "dining fork", "table fork"]
+    id: 10
+  coco:
+    aliases: ["fork"]
+    category_id: 43
+  custom_detector:
+    aliases: ["fork_dinner", "fork_4prong"]
+    confidence_threshold: 0.9
+policy:
+  grasping:
+    affordances: [lift, stab, scoop]
+    preferred_grasp_type: handle_grasp
+    difficulty: medium
+    orientation_constraints:
+      - name: stabbing
+        pitch_range: [75, 90]
+        yaw_range: [0, 360]
+      - name: scooping
+        pitch_range: [0, 45]
+  manipulation:
+    stable_poses: [handle_down, prongs_down]
+    requires_precise_control: true
+  task_specific:
+    stabbing:
+      target_materials: [food, soft_materials]
+      force_required: 1.5
+    scooping:
+      preferred_angle: 30

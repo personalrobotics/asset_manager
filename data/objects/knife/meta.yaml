@@ -1,12 +1,37 @@
 
 name: knife
-category: [utensil]
-mass: 0.2
-color: [0.5 0.5 0.5]
+category: [utensil, sharp_object, tool]
+mass: 0.12
+dimensions: [0.20, 0.02, 0.01]
+color: [0.5, 0.5, 0.5]
+material: stainless_steel
+safety:
+  sharp: true
+  requires_caution: true
 mujoco:
   xml_path: mujoco_knife.xml
+  scale: 1.0
+  friction: [1.5, 0.1, 0.01]
 isaac:
   usd_path: knife.usd
+  physics_material: metal
+  collision_group: 1
 perception:
   ycb:
-    aliases: ["knife", "Knife"]
+    aliases: ["knife", "Knife", "kitchen knife", "chef knife"]
+    id: 4
+  coco:
+    aliases: ["knife"]
+    category_id: 44
+  custom_detector:
+    aliases: ["knife_chef_8inch"]
+    confidence_threshold: 0.92
+policy:
+  grasping:
+    affordances: [lift, cut, slice]
+    preferred_grasp_type: handle_grasp
+    difficulty: hard
+    safety_notes: "Require precise orientation, avoid blade contact"
+  manipulation:
+    stable_poses: [blade_down, handle_down]
+    requires_precise_control: true

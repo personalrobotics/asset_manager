@@ -1,0 +1,8 @@
+<mujoco model="fork">
+  <worldbody>
+    <body name="fork" pos="0 0 0.09">
+      <geom type="box" size="0.0025 0.0075 0.09" rgba="0.7 0.7 0.75 1"/>
+      <joint type="free"/>
+    </body>
+  </worldbody>
+</mujoco>

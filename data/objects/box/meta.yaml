@@ -1,0 +1,65 @@
+name: box
+category: [container, storage, manipulable]
+mass: 0.5
+dimensions: [0.15, 0.15, 0.15]
+color: [0.6, 0.4, 0.2]
+material: cardboard
+geometric_properties:
+  type: rectangular_prism
+  has_lid: true
+  lid_attached: false
+  internal_volume: 0.003375
+mujoco:
+  xml_path: mujoco_box.xml
+  scale: 1.0
+  friction: [1.0, 0.01, 0.001]
+  damping: [0.1, 0.1, 0.1]
+isaac:
+  usd_path: box.usd
+  physics_material: cardboard
+  collision_group: -1
+  rendering:
+    roughness: 0.8
+    metallic: 0.0
+perception:
+  ycb:
+    aliases: ["box", "Box", "cardboard box", "shipping box"]
+    id: 21
+  coco:
+    aliases: ["box", "cardboard box"]
+    category_id: 18
+  custom_detector:
+    aliases: ["box_brown_small", "box_15cm"]
+    confidence_threshold: 0.87
+  occluded_detection:
+    partial_visibility_threshold: 0.3
+    keypoint_count: 8
+policy:
+  grasping:
+    affordances: [lift, carry, place, open, close]
+    preferred_grasp_type: [side_grasp, top_grasp]
+    difficulty: easy
+    weight_capacity: 2.0
+  manipulation:
+    stable_poses: [any_face_down, upright]
+    stackable: true
+    nestable: true
+  task_specific:
+    opening:
+      lid_type: hinged
+      requires_gripper_engagement: true
+    stacking:
+      max_height: 5
+      requires_alignment: true
+learning:
+  training_data:
+    source_datasets: [ycb, custom_collection]
+    sample_count: 1250
+    augmentation_applied: true
+  policy_training:
+    reinforcement_learning:
+      task_types: [pick_and_place, stacking, manipulation]
+      success_rate: 0.94
+    imitation_learning:
+      demonstration_count: 150
+      expert_type: human_teleop

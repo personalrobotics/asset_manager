@@ -1,12 +1,33 @@
 
 name: plate
-category: [kitchenware]
-mass: 0.2
-color: [0.9 0.9 0.9]
+category: [kitchenware, container, stable]
+mass: 0.25
+dimensions: [0.20, 0.20, 0.02]
+color: [0.9, 0.9, 0.9]
+material: porcelain
 mujoco:
   xml_path: mujoco_plate.xml
+  scale: 1.0
+  friction: [1.0, 0.005, 0.0001]
 isaac:
   usd_path: plate.usd
+  physics_material: ceramic
+  collision_group: -1
 perception:
   ycb:
-    aliases: ["plate", "Plate"]
+    aliases: ["plate", "Plate", "dinner plate", "dish"]
+    id: 24
+  coco:
+    aliases: ["plate", "dish"]
+    category_id: 46
+  custom_detector:
+    aliases: ["white_plate_round"]
+    confidence_threshold: 0.9
+policy:
+  grasping:
+    affordances: [lift, place, stack]
+    preferred_grasp_type: rim_grasp
+    difficulty: easy
+  manipulation:
+    stable_poses: [horizontal]
+    stackable: true

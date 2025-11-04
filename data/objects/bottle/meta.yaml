@@ -1,0 +1,52 @@
+name: bottle
+category: [container, kitchenware, recyclable]
+mass: 0.35
+dimensions: [0.06, 0.06, 0.25]
+color: [0.1, 0.3, 0.8]
+material: plastic
+transparency: 0.3
+mujoco:
+  xml_path: mujoco_bottle.xml
+  scale: 1.0
+  friction: [0.8, 0.005, 0.0001]
+  damping: [0.2, 0.2, 0.2]
+isaac:
+  usd_path: bottle.usd
+  physics_material: plastic
+  collision_group: -1
+  rendering:
+    roughness: 0.3
+    metallic: 0.0
+perception:
+  ycb:
+    aliases: ["bottle", "Bottle", "water bottle", "plastic bottle"]
+    id: 39
+  coco:
+    aliases: ["bottle", "wine bottle"]
+    category_id: 40
+  custom_detector:
+    aliases: ["bottle_water_500ml", "blue_bottle"]
+    confidence_threshold: 0.88
+  depth_estimation:
+    known_height: 0.25
+    reference_distance: 1.0
+policy:
+  grasping:
+    affordances: [lift, pour, open]
+    preferred_grasp_type: body_grasp
+    difficulty: easy
+    two_handed_supported: true
+  manipulation:
+    stable_poses: [upright, on_side]
+    pour_direction: top
+  task_specific:
+    opening:
+      requires_gripper_rotation: true
+      torque_required: 2.5
+rendering:
+  textures:
+    label_path: textures/bottle_label.png
+    normal_map: textures/bottle_normal.png
+  lighting:
+    subsurface_scattering: true
+    emission: [0.0, 0.0, 0.0]
