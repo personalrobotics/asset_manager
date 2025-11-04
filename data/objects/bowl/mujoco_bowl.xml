@@ -1,0 +1,9 @@
+
+<mujoco model="bowl">
+  <worldbody>
+    <body name="bowl" pos="0 0 0.05">
+      <geom type="cylinder" size="0.03 0.05" rgba="0.2 0.8 0.2 1"/>
+      <joint type="free"/>
+    </body>
+  </worldbody>
+</mujoco>

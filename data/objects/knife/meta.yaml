@@ -1,0 +1,12 @@
+
+name: knife
+category: [utensil]
+mass: 0.2
+color: [0.5 0.5 0.5]
+mujoco:
+  xml_path: mujoco_knife.xml
+isaac:
+  usd_path: knife.usd
+perception:
+  ycb:
+    aliases: ["knife", "Knife"]

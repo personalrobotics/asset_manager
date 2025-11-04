@@ -1,0 +1,12 @@
+
+name: cup
+category: [kitchenware]
+mass: 0.2
+color: [0.8 0.2 0.2]
+mujoco:
+  xml_path: mujoco_cup.xml
+isaac:
+  usd_path: cup.usd
+perception:
+  ycb:
+    aliases: ["cup", "Cup"]
