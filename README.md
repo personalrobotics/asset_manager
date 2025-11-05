@@ -1,6 +1,6 @@
 
 # 🧠 Asset Manager
-*A unified, simulator-agnostic registry for robotics assets.*
+*Describe once, use everywhere — a shared registry for robotic assets across perception, simulation, and learning.*
 
 Robotics projects often need to reuse the same physical assets — like cups, plates, and tools — across **multiple simulators, perception pipelines, and learning policies**.  
 Managing these assets in each system separately leads to duplication, inconsistent metadata, and synchronization errors.
