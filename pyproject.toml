@@ -6,10 +6,10 @@ build-backend = "hatchling.build"
 name = "asset_manager"
 version = "0.1.0"
 description = "A unified, simulator-agnostic registry for robotics assets"
-requires-python = ">=3.13"
+requires-python = ">=3.8"
 license = {text = "BSD-3-Clause"}
 dependencies = [
-    "pyyaml>=6.0.3",
+    "pyyaml>=5.4",
 ]
 
 [tool.hatchling.build]
