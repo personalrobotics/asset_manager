@@ -85,12 +85,29 @@ rendering:
 
 ## 🚀 Quickstart
 
+### Installation
+
 ```bash
-# Initialize project (if using uv)
-uv sync
+# Install from source (recommended)
+uv pip install -e .
+
+# Or install from PyPI (once published)
+# pip install asset_manager
+```
+
+### Usage
+
+```python
+from asset_manager import AssetManager
+
+# Initialize with your asset directory
+am = AssetManager("data/objects", validate_files=False)
+
+# List all assets
+print(am.list())
 
 # Run the comprehensive demo
-PYTHONPATH=src uv run demos/full_capabilities.py
+uv run demos/full_capabilities.py
 ```
 
 Example output:
@@ -118,7 +135,7 @@ Example output:
 ## 🧠 Example Queries
 
 ```python
-from asset_manager.manager import AssetManager
+from asset_manager import AssetManager
 
 am = AssetManager("data/objects", validate_files=False)
 
