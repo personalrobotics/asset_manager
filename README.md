@@ -237,5 +237,8 @@ asset_manager/
 
 ## 🧑‍💻 Authors
 
-Developed by **Siddhartha Srinivasa**  
-Personal Robotics Lab, University of Washington
+Developed by **Siddhartha Srinivasa**.
+
+## 📄 License
+
+MIT — see [LICENSE](LICENSE).

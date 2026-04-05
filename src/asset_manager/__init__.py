@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025 Siddhartha Srinivasa
+
 """Asset Manager - A unified, simulator-agnostic registry for robotics assets."""
 
 from pathlib import Path
@@ -22,4 +25,3 @@ def get_objects_path() -> Path:
         >>> manager = AssetManager(base_dir=str(get_objects_path()))
     """
     return _PACKAGE_DIR.parent.parent / "data" / "objects"
-

@@ -1,12 +1,16 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025 Siddhartha Srinivasa
 
 import os
+from typing import Any, Dict, List, Optional
+
 import yaml
-from typing import Dict, Any, List, Optional
+
 
 class AssetManager:
     """Minimal, simulator-agnostic Asset Manager."""
 
-    def __init__(self, base_dir: str, verbose: bool=False, validate_files: bool=True):
+    def __init__(self, base_dir: str, verbose: bool = False, validate_files: bool = True):
         self.base_dir = os.path.abspath(base_dir)
         self.verbose = verbose
         self.validate_files = validate_files
@@ -28,7 +32,10 @@ class AssetManager:
                     raise ValueError(f"Duplicate asset name: {name}")
                 self._asset_dirs[name] = root
 
-                for sim_key, path_key in [("mujoco", "xml_path"), ("isaac", "usd_path")]:
+                for sim_key, path_key in [
+                    ("mujoco", "xml_path"),
+                    ("isaac", "usd_path"),
+                ]:
                     if sim_key in data and isinstance(data[sim_key], dict):
                         rel = data[sim_key].get(path_key)
                         if rel:
@@ -89,11 +96,11 @@ class AssetManager:
 
     def resolve_alias(self, alias: str, module: str) -> Optional[str]:
         """Resolve a perception alias to the canonical asset name.
-        
+
         Args:
             alias: The alias string to resolve (e.g., "red cup", "mug")
             module: The perception module name (e.g., "ycb", "coco")
-            
+
         Returns:
             The canonical asset name if found, None otherwise.
         """

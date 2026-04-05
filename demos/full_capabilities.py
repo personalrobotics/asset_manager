@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025 Siddhartha Srinivasa
+
 """
 full_capabilities_demo.py
 
@@ -10,9 +13,11 @@ Comprehensive demonstration of the AssetManager capabilities:
 - YAML export for debugging
 """
 
-from asset_manager.manager import AssetManager
-import yaml
 import os
+
+import yaml
+
+from asset_manager.manager import AssetManager
 
 
 def main():
@@ -71,11 +76,13 @@ def main():
     resolved_objects = []
     for det in perception_output:
         canonical = am.resolve_alias(det["label"], module="ycb")
-        resolved_objects.append({
-            "label": det["label"],
-            "canonical_name": canonical,
-            "confidence": det["confidence"],
-        })
+        resolved_objects.append(
+            {
+                "label": det["label"],
+                "canonical_name": canonical,
+                "confidence": det["confidence"],
+            }
+        )
 
     print(yaml.dump(resolved_objects, sort_keys=False, default_flow_style=False))
 
@@ -87,7 +94,9 @@ def main():
         for backend in ["mujoco", "isaac"]:
             path = am.get_path(name, backend)
             exists = os.path.exists(path) if path else False
-            print(f"{backend.capitalize():6s} path for {name:8s}: {path or '-':40s} {'[OK]' if exists else '[MISSING]'}")
+            print(
+                f"{backend.capitalize():6s} path for {name:8s}: {path or '-':40s} {'[OK]' if exists else '[MISSING]'}"
+            )
 
     # ----------------------------------------------------------------------
     # 7️⃣ Export subset to YAML
