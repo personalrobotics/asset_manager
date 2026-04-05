@@ -6,11 +6,32 @@ build-backend = "hatchling.build"
 name = "asset_manager"
 version = "0.1.0"
 description = "A unified, simulator-agnostic registry for robotics assets"
+readme = "README.md"
 requires-python = ">=3.8"
-license = {text = "BSD-3-Clause"}
+license = "MIT"
+authors = [
+    {name = "Siddhartha Srinivasa", email = "siddhartha.srinivasa@gmail.com"},
+]
+maintainers = [
+    {name = "Siddhartha Srinivasa", email = "siddhartha.srinivasa@gmail.com"},
+]
 dependencies = [
     "pyyaml>=5.4",
 ]
 
+[project.urls]
+Homepage = "https://github.com/personalrobotics/asset_manager"
+Repository = "https://github.com/personalrobotics/asset_manager"
+Issues = "https://github.com/personalrobotics/asset_manager/issues"
+
 [tool.hatchling.build]
 packages = ["src/asset_manager"]
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+select = ["F", "E", "W", "I"]
+
+[tool.ruff.lint.per-file-ignores]
+"src/asset_manager/__init__.py" = ["F401"]
