@@ -94,31 +94,29 @@ class AssetManager:
                         mods.add(f"perception:{sub}")
         return sorted(mods)
 
-    def resolve_alias(self, alias: str, module: str) -> Optional[str]:
+    def resolve_alias(self, alias: str) -> Optional[str]:
         """Resolve a perception alias to the canonical asset name.
 
+        Checks the flat ``perception.aliases`` list in each asset's
+        meta.yaml, then falls back to matching the canonical name.
+
         Args:
-            alias: The alias string to resolve (e.g., "red cup", "mug")
-            module: The perception module name (e.g., "ycb", "coco")
+            alias: The alias string to resolve (e.g., "soda can", "can")
 
         Returns:
             The canonical asset name if found, None otherwise.
         """
         alias_lower = alias.lower()
         for name, meta in self.assets.items():
+            if name.lower() == alias_lower:
+                return name
             perception = meta.get("perception", {})
             if not isinstance(perception, dict):
                 continue
-            module_data = perception.get(module, {})
-            if not isinstance(module_data, dict):
-                continue
-            aliases = module_data.get("aliases", [])
+            aliases = perception.get("aliases", [])
             if not isinstance(aliases, list):
                 continue
             for a in aliases:
                 if isinstance(a, str) and a.lower() == alias_lower:
                     return name
-            # Also check if the alias matches the canonical name
-            if name.lower() == alias_lower:
-                return name
         return None
