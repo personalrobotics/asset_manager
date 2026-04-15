@@ -19,6 +19,12 @@ dependencies = [
     "pyyaml>=5.4",
 ]
 
+[dependency-groups]
+dev = [
+    "ruff>=0.4",
+    "pytest>=7.0",
+]
+
 [project.urls]
 Homepage = "https://github.com/personalrobotics/asset_manager"
 Repository = "https://github.com/personalrobotics/asset_manager"
