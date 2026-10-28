@@ -18,8 +18,8 @@ env/
 *.swo
 *~
 
-# Generated files (demo outputs)
-registry_*.yaml
+# Test artifacts
+artifacts/
 
 # OS
 .DS_Store
