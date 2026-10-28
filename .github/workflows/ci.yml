@@ -67,6 +67,8 @@ jobs:
           uv pip install --python clean/bin/python dist/*.whl
 
       - name: The README example runs from the installed wheel and prints its documented output
+        # An explicit bash shell adds pipefail, so the example's exit status survives tee.
+        shell: bash
         run: |
           # The section's first python block is the example and the following text block is its output.
           section() { sed -n '/^## Using the registry/,/^## /p' README.md; }
