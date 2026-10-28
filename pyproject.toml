@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "asset_manager"
-version = "0.1.0"
+version = "0.2.0"
 description = "A unified, simulator-agnostic registry for robotics assets"
 readme = "README.md"
 requires-python = ">=3.8"
@@ -39,5 +39,3 @@ line-length = 120
 [tool.ruff.lint]
 select = ["F", "E", "W", "I"]
 
-[tool.ruff.lint.per-file-ignores]
-"src/asset_manager/__init__.py" = ["F401"]
