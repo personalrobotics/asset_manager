@@ -10,8 +10,8 @@ here rather than restating it.
 file named `meta.yaml` is one asset, and paths in that file are relative to that
 directory. An empty `meta.yaml` describes an asset with no metadata beyond its name.
 
-The top level of `meta.yaml` must be a mapping. Indexing raises `ValueError` naming
-the file when it is not.
+The top level of `meta.yaml` must be a mapping whose field names are strings. Indexing
+raises `ValueError` naming the file when it is not.
 
 ## Interpreted fields
 
@@ -38,7 +38,9 @@ Each supported simulator has one key that holds the path of its model file:
 | MuJoCo | `mujoco` | `xml_path` |
 | Isaac | `isaac` | `usd_path` |
 
-A path must be a string, relative to the asset directory, and must resolve, after
+A section may omit its path key, in which case the asset declares no model for that
+simulator. A path key that is present is always checked, whatever its value: it must
+be a non-empty string, relative to the asset directory, and must resolve, after
 following symbolic links, to a location inside that directory. Indexing raises
 `ValueError` naming the file otherwise.
 

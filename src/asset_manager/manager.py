@@ -43,12 +43,11 @@ class AssetManager:
                 self._meta_paths[name] = meta_path
 
                 for sim_key, path_key in SIMULATOR_PATH_KEYS.items():
-                    if sim_key in data:
-                        rel = data[sim_key].get(path_key)
-                        if rel:
-                            full = self._model_path(meta_path, root, f"{sim_key}.{path_key}", rel)
-                            if self.validate_files and not os.path.isfile(full):
-                                raise FileNotFoundError(f"{sim_key} file missing for {name}: {full}")
+                    if path_key in data.get(sim_key, {}):
+                        rel = data[sim_key][path_key]
+                        full = self._model_path(meta_path, root, f"{sim_key}.{path_key}", rel)
+                        if self.validate_files and not os.path.isfile(full):
+                            raise FileNotFoundError(f"{sim_key} file missing for {name}: {full}")
                 self.assets[name] = data
         self._index_labels()
         if self.verbose:
@@ -57,8 +56,8 @@ class AssetManager:
     @staticmethod
     def _model_path(meta_path: str, root: str, field: str, rel: Any) -> str:
         """Join a declared model path to its asset directory, refusing one that leaves it."""
-        if not isinstance(rel, str):
-            raise ValueError(f"{meta_path}: {field} must be a string")
+        if not isinstance(rel, str) or not rel:
+            raise ValueError(f"{meta_path}: {field} must be a non-empty string")
         full = os.path.join(root, rel)
         real_root = os.path.realpath(root)
         if os.path.isabs(rel) or os.path.commonpath([real_root, os.path.realpath(full)]) != real_root:
@@ -95,6 +94,9 @@ class AssetManager:
         def is_str_list(value: Any) -> bool:
             return isinstance(value, list) and all(isinstance(v, str) for v in value)
 
+        non_string = [key for key in data if not isinstance(key, str)]
+        if non_string:
+            raise ValueError(f"{path}: field names must be strings, got {non_string!r}")
         if "name" in data and not isinstance(data["name"], str):
             raise ValueError(f"{path}: name must be a string")
         if "category" in data and not is_str_list(data["category"]):
