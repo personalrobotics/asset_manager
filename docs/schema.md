@@ -26,7 +26,8 @@ violation raises `ValueError` naming the file and the field.
 | `isaac` | mapping | Isaac section. See [simulator sections](#simulator-sections). |
 | `perception` | mapping | Perception section. See [perception](#perception). |
 
-Canonical names must be unique. A second asset with the same name raises `ValueError`.
+Canonical names must be unique. A second asset with the same name raises `ValueError`
+naming both files.
 
 ## Simulator sections
 
@@ -36,6 +37,10 @@ Each supported simulator has one key that holds the path of its model file:
 | --- | --- | --- |
 | MuJoCo | `mujoco` | `xml_path` |
 | Isaac | `isaac` | `usd_path` |
+
+A path must be a string, relative to the asset directory, and must resolve, after
+following symbolic links, to a location inside that directory. Indexing raises
+`ValueError` naming the file otherwise.
 
 When `validate_files` is true, which is the default, indexing raises
 `FileNotFoundError` if a declared model file does not exist. `get_path(name,
@@ -53,8 +58,9 @@ for this asset. `resolve_alias(label)` returns the asset whose canonical name or
 alias list contains `label`, ignoring case, and `None` otherwise. It raises
 `TypeError` when `label` is not a string.
 
-Each label, compared case-insensitively, must identify at most one asset. Indexing
-raises `ValueError` when
+Labels are compared after Unicode case folding, so "Straße" and "STRASSE" are the same
+label. Each label must identify at most one asset. Indexing raises `ValueError`, naming
+both declaring files, when
 
 - two assets list the same alias,
 - an alias equals another asset's canonical name, or
