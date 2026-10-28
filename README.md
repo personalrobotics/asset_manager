@@ -1,244 +1,145 @@
+# asset_manager
 
-# 🧠 Asset Manager
-*Describe once, use everywhere — a shared registry for robotic assets across perception, simulation, and learning.*
+A physical object used in robotics research appears in several systems at once. A
+simulator needs its model file, a perception pipeline needs the labels a detector may
+assign to it, and a planner or policy may need its category, mass, or other task
+metadata. When each system keeps its own description, the descriptions drift apart: a
+renamed file breaks one consumer, and a detector label that one system understands is
+unknown to the next.
 
-Robotics projects often need to reuse the same physical assets — like cups, plates, and tools — across **multiple simulators, perception pipelines, and learning policies**.  
-Managing these assets in each system separately leads to duplication, inconsistent metadata, and synchronization errors.
+asset_manager keeps one description of each object and answers the questions those
+systems share. It indexes a directory of assets, checks the fields it interprets,
+resolves simulator model paths, and maps detector labels to canonical asset names.
 
-The **Asset Manager** provides a single source of truth for all object definitions, simulator-specific files, and perception aliases.
+The scope is intentionally narrow. asset_manager is not an asset collection, a scene
+builder, a simulator loader, or a perception system. It defines the metadata format
+and the registry that those packages share.
 
----
+## Asset directories
 
-## 🎯 Motivation
-
-| Challenge | Solution |
-|------------|-----------|
-| MuJoCo, Isaac, and Perception each store their own asset definitions | Use a single YAML registry to describe every object once |
-| Each simulator needs paths, colors, or scaling in different formats | Define them under namespaced sections (`mujoco:`, `isaac:`, etc.) |
-| Perception may call the same object by multiple names | Add module-specific aliases under `perception:` |
-| Policy and learning systems need object-specific metadata | Extensible module system supports `policy:`, `learning:`, `safety:`, etc. |
-
----
-
-## 🧩 Design Principles
-
-1. **YAML-first** — all data stored as simple text files, easily versioned in Git.  
-2. **Simulator-agnostic** — supports any backend (`mujoco`, `isaac`, `ros`, `gazebo`, `urdf`).  
-3. **Module extensibility** — new keys (like `policy`, `rendering`, `learning`, etc.) can be added freely.  
-4. **Immutable schema, flexible semantics** — top-level fields are human-readable and directly parsed.  
-5. **Minimal dependencies** — just `PyYAML`.
-
----
-
-## ⚙️ Example Schema (`meta.yaml`)
-
-Here's a comprehensive example showing the full power of the Asset Manager:
+An asset is a directory containing a `meta.yaml` file and the files it refers to,
+such as a MuJoCo model. The model file remains authoritative for geometry, inertia,
+and contacts. `meta.yaml` adds what the model format does not express uniformly: a
+canonical name, categories, the labels perception may use, and the location of each
+simulator's model.
 
 ```yaml
 name: cup
 category: [kitchenware, container, fragile]
 mass: 0.15
 dimensions: [0.08, 0.08, 0.12]
-color: [0.8, 0.2, 0.2]
-material: ceramic
-
-# Simulator-specific configurations
 mujoco:
   xml_path: mujoco_cup.xml
-  scale: 1.0
-  damping: [0.1, 0.1, 0.1]
-isaac:
-  usd_path: cup.usd
-  physics_material: ceramic
-  collision_group: -1
-
-# Multiple perception modules with aliases
 perception:
-  ycb:
-    aliases: ["mug", "cup001", "red cup", "drinking cup"]
-    id: 42
-  coco:
-    aliases: ["cup", "mug", "coffee cup"]
-    category_id: 47
-  custom_detector:
-    aliases: ["red_cup_v2", "cup_small"]
-    confidence_threshold: 0.85
-
-# Policy and manipulation metadata
+  aliases: ["mug", "red cup", "coffee cup"]
 policy:
   grasping:
-    affordances: [lift, pour]
     preferred_grasp_type: top_down
-    difficulty: medium
-  manipulation:
-    stable_poses: [upright, sideways]
-
-# Rendering configuration (optional)
-rendering:
-  textures:
-    label_path: textures/cup_label.png
-  lighting:
-    subsurface_scattering: false
 ```
 
----
+The exact format is specified in [the schema](docs/schema.md).
 
-## 🚀 Quickstart
+## The registry
 
-### Installation
+`AssetManager` walks a base directory and indexes every directory that contains a
+`meta.yaml`. Indexing is where problems are reported. A malformed interpreted field, a
+missing model file, a duplicate name, or a label that would name two assets raises an
+error that identifies the file. A registry that was constructed successfully can
+therefore answer queries without further checks.
 
-```bash
-# Install from source (recommended)
-uv pip install -e .
+Queries return copies. Changing the metadata returned by `get()` does not change the
+registry, so one registry can be shared safely among several consumers.
 
-# Or install from PyPI (once published)
-# pip install asset_manager
+## Sections and their owners
+
+The registry interprets a small set of fields: `name`, `category`, the simulator
+sections `mujoco` and `isaac`, and `perception.aliases`. Every other field or section,
+such as `policy`, `safety`, or `rendering`, belongs to the consumer that reads it. The
+registry stores and returns those sections unchanged and does not check their
+contents. A new consumer can therefore add its own section without changing this
+package, but it is responsible for validating that section itself.
+
+## Perception labels
+
+A detector reports labels such as "mug" or "soda can", while the rest of the system
+refers to objects by canonical names. `resolve_alias` maps a label to the asset whose
+canonical name or `perception.aliases` list contains it, ignoring case.
+
+Each label must identify at most one asset. The registry refuses, while indexing, an
+alias listed by two assets and an alias equal to another asset's name. Resolution is
+then a single lookup whose answer does not depend on the order in which directories
+were visited. The reasons for a single flat alias list rather than one list per
+detector are recorded in [a decision record](docs/decisions/0001-flat-perception-aliases.md).
+
+## Using the registry
+
+From a clone, [uv](https://docs.astral.sh/uv/) installs the package and its
+development tools:
+
+```sh
+git clone https://github.com/personalrobotics/asset_manager
+cd asset_manager
+uv sync
 ```
 
-### Usage
+The following example indexes the sample objects in `data/objects`, queries them by
+category, resolves two detector labels, and finds a MuJoCo model:
 
 ```python
+from pathlib import Path
+
 from asset_manager import AssetManager
 
-# Initialize with your asset directory
-am = AssetManager("data/objects", validate_files=False)
-
-# List all assets
-print(am.list())
-
-# Run the comprehensive demo
-uv run demos/full_capabilities.py
+registry = AssetManager("data/objects")
+print(registry.list())
+print(registry.by_category("kitchenware"))
+print(registry.resolve_alias("Red Cup"), registry.resolve_alias("dish"))
+print(Path(registry.get_path("cup", "mujoco")).relative_to(Path.cwd()))
 ```
 
-Example output:
-```
-[AssetManager] Indexed 7 assets from data/objects
+Run it with `uv run python` from the repository root. It prints:
 
-========== SUMMARY ==========
-[AssetManager] Loaded 7 assets from data/objects
-  - bottle     | container, kitchenware, recyclable | MJ: mujoco_bottle.xml | Isaac: bottle.usd
-  - bowl       | kitchenware, container | MJ: mujoco_bowl.xml | Isaac: bowl.usd
-  - box        | container, storage, manipulable | MJ: mujoco_box.xml  | Isaac: box.usd
-  - cup        | kitchenware, container, fragile | MJ: mujoco_cup.xml  | Isaac: cup.usd
-  - fork       | utensil, tool, metal | MJ: mujoco_fork.xml | Isaac: fork.usd
-  - knife      | utensil, sharp_object, tool | MJ: mujoco_knife.xml | Isaac: knife.usd
-  - plate      | kitchenware, container, stable | MJ: mujoco_plate.xml | Isaac: plate.usd
-
-========== MODULES ==========
-['geometric_properties', 'isaac', 'learning', 'mujoco', 'perception', 
- 'perception:coco', 'perception:custom_detector', 'perception:depth_estimation', 
- 'perception:occluded_detection', 'perception:ycb', 'policy', 'rendering', 'safety']
+```text
+['bottle', 'bowl', 'box', 'cup', 'fork', 'knife', 'plate']
+['bottle', 'bowl', 'cup', 'plate']
+cup plate
+data/objects/cup/mujoco_cup.xml
 ```
 
----
+CI runs this example from the built wheel and compares its output with the text above.
+The sample objects are part of the repository, not the installed package. Their
+physical and task metadata is illustrative rather than measured. A fuller tour is in
+`demos/full_capabilities.py`.
 
-## 🧠 Example Queries
+## Current capabilities
 
-```python
-from asset_manager import AssetManager
+| Capability | Status | Details |
+| --- | --- | --- |
+| Index asset directories and validate interpreted fields | Implemented | [Schema](docs/schema.md) |
+| MuJoCo model paths, checked while indexing | Implemented; used by mj_environment with prl_assets | [Schema](docs/schema.md#simulator-sections) |
+| Isaac model paths | Path lookup and existence check only; no Isaac consumer exists yet | [Schema](docs/schema.md#simulator-sections) |
+| Perception label resolution | Implemented; used by mj_manipulator's `SimPerceptionService` | [Schema](docs/schema.md#perception) |
+| Category queries | Implemented | [Schema](docs/schema.md#interpreted-fields) |
+| Consumer sections such as `policy` or `safety` | Stored and returned unchanged; not interpreted | [Schema](docs/schema.md#consumer-sections) |
+| ROS, Gazebo, or URDF model paths | Not supported | |
 
-am = AssetManager("data/objects", validate_files=False)
+## Related packages
 
-# List all assets
-print(am.list())
-# ['bottle', 'bowl', 'box', 'cup', 'fork', 'knife', 'plate']
+| Package | Owns |
+| --- | --- |
+| asset_manager | The `meta.yaml` format, indexing, validation, and label resolution |
+| [prl_assets](https://github.com/personalrobotics/prl_assets) | The reusable objects used by the lab's robots |
+| [mj_environment](https://github.com/personalrobotics/mj_environment) | Building MuJoCo scenes from indexed assets |
+| [mj_manipulator](https://github.com/personalrobotics/mj_manipulator) | Perception services that resolve detector labels |
 
-# Filter by category
-print(am.by_category("kitchenware"))
-# ['cup', 'plate', 'bowl', 'bottle']
+## Documentation
 
-# Get simulator-specific file path
-print(am.get_path("cup", "mujoco"))
-# /path/to/data/objects/cup/mujoco_cup.xml
+| Task | Document |
+| --- | --- |
+| Write or check a `meta.yaml` precisely | [Schema](docs/schema.md) |
+| Add an asset or publish a package of assets | [Authoring assets](docs/authoring.md) |
+| Change the documentation | [Documentation guide](docs/documentation.md) |
 
-# Resolve perception alias across multiple modules
-print(am.resolve_alias("red cup", module="ycb"))  # → cup
-print(am.resolve_alias("mug", module="coco"))      # → cup
+## License
 
-# Get full asset metadata
-cup_meta = am.get("cup")
-print(cup_meta["policy"]["grasping"]["affordances"])
-# ['lift', 'pour']
-
-# Discover available modules
-print(am.modules())
-# ['geometric_properties', 'isaac', 'learning', 'mujoco', 'perception', ...]
-```
-
----
-
-## 🏗️ Supported Modules
-
-The Asset Manager supports extensible modules for different use cases:
-
-| Module | Purpose | Example Use Case |
-|---------|---------|------------------|
-| **mujoco** | MuJoCo simulator config | Physics properties, XML paths, friction, damping |
-| **isaac** | Isaac Sim config | USD paths, physics materials, collision groups, rendering |
-| **perception** | Perception pipeline integration | Multi-module alias resolution (YCB, COCO, custom detectors) |
-| **policy** | Grasping and manipulation | Affordances, grasp types, difficulty, stable poses |
-| **learning** | ML/RL training metadata | Dataset sources, training configurations, success rates |
-| **safety** | Safety constraints | Sharp objects, handling requirements |
-| **rendering** | Visualization config | Textures, lighting, material properties |
-| **geometric_properties** | Shape metadata | Dimensions, volumes, structural properties |
-
----
-
-## 🧩 Architecture Diagram
-
-```mermaid
-graph TD
-  A[meta.yaml] -->|mujoco.xml_path| B[MuJoCo Backend]
-  A -->|isaac.usd_path| C[Isaac Backend]
-  A -->|perception.*.aliases| D[Perception Stack]
-  A -->|policy.grasping| E[Policy System]
-  A -->|learning.*| F[Learning Pipeline]
-  A -->|category, mass, color| G[Common Metadata]
-```
-
----
-
-## 📦 Directory Layout
-
-```
-asset_manager/
-├── src/
-│   └── asset_manager/
-│       └── manager.py
-├── data/
-│   └── objects/
-│       ├── cup/
-│       │   ├── meta.yaml
-│       │   └── mujoco_cup.xml
-│       ├── bowl/
-│       ├── plate/
-│       ├── knife/
-│       ├── bottle/
-│       ├── fork/
-│       └── box/
-└── demos/
-    └── full_capabilities.py
-```
-
----
-
-## 🔍 Key Features
-
-- ✅ **Multi-module perception support** — resolve aliases across YCB, COCO, and custom detectors
-- ✅ **Simulator-agnostic** — unified interface for MuJoCo, Isaac, and future simulators
-- ✅ **Policy integration** — store grasping affordances, manipulation constraints, and task-specific data
-- ✅ **Learning metadata** — track training data sources, augmentation, and policy performance
-- ✅ **Safety annotations** — mark sharp objects, handling requirements, and caution flags
-- ✅ **Rich metadata** — dimensions, materials, colors, and geometric properties
-- ✅ **Category filtering** — query assets by one or more categories
-- ✅ **YAML export** — export subsets of assets for integration with other tools
-
----
-
-## 🧑‍💻 Authors
-
-Developed by **Siddhartha Srinivasa**.
-
-## 📄 License
-
-MIT — see [LICENSE](LICENSE).
+MIT. See [LICENSE](LICENSE).
