@@ -1,4 +1,3 @@
-
 name: cup
 category: [kitchenware, container, fragile]
 mass: 0.15
@@ -9,20 +8,8 @@ mujoco:
   xml_path: mujoco_cup.xml
   scale: 1.0
   damping: [0.1, 0.1, 0.1]
-isaac:
-  usd_path: cup.usd
-  physics_material: ceramic
-  collision_group: -1
 perception:
-  ycb:
-    aliases: ["mug", "cup001", "red cup", "drinking cup"]
-    id: 42
-  coco:
-    aliases: ["cup", "mug", "coffee cup"]
-    category_id: 47
-  custom_detector:
-    aliases: ["red_cup_v2", "cup_small"]
-    confidence_threshold: 0.85
+  aliases: ["mug", "cup001", "red cup", "drinking cup", "cup", "coffee cup", "red_cup_v2", "cup_small"]
 policy:
   grasping:
     affordances: [lift, pour]

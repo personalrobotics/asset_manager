@@ -14,26 +14,8 @@ mujoco:
   scale: 1.0
   friction: [1.0, 0.01, 0.001]
   damping: [0.1, 0.1, 0.1]
-isaac:
-  usd_path: box.usd
-  physics_material: cardboard
-  collision_group: -1
-  rendering:
-    roughness: 0.8
-    metallic: 0.0
 perception:
-  ycb:
-    aliases: ["box", "Box", "cardboard box", "shipping box"]
-    id: 21
-  coco:
-    aliases: ["box", "cardboard box"]
-    category_id: 18
-  custom_detector:
-    aliases: ["box_brown_small", "box_15cm"]
-    confidence_threshold: 0.87
-  occluded_detection:
-    partial_visibility_threshold: 0.3
-    keypoint_count: 8
+  aliases: ["box", "cardboard box", "shipping box", "box_brown_small", "box_15cm"]
 policy:
   grasping:
     affordances: [lift, carry, place, open, close]
