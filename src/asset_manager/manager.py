@@ -25,6 +25,7 @@ class AssetManager:
             raise FileNotFoundError(f"Asset base directory not found: {self.base_dir}")
         self.assets: Dict[str, Dict[str, Any]] = {}
         self._asset_dirs: Dict[str, str] = {}
+        self._meta_paths: Dict[str, str] = {}
         self._labels: Dict[str, str] = {}
         self._index()
 
@@ -37,14 +38,15 @@ class AssetManager:
                 data["name"] = name
 
                 if name in self.assets:
-                    raise ValueError(f"Duplicate asset name: {name}")
+                    raise ValueError(f"Duplicate asset name {name!r} in {self._meta_paths[name]} and {meta_path}")
                 self._asset_dirs[name] = root
+                self._meta_paths[name] = meta_path
 
                 for sim_key, path_key in SIMULATOR_PATH_KEYS.items():
                     if sim_key in data:
                         rel = data[sim_key].get(path_key)
                         if rel:
-                            full = os.path.join(root, rel)
+                            full = self._model_path(meta_path, root, f"{sim_key}.{path_key}", rel)
                             if self.validate_files and not os.path.isfile(full):
                                 raise FileNotFoundError(f"{sim_key} file missing for {name}: {full}")
                 self.assets[name] = data
@@ -52,15 +54,29 @@ class AssetManager:
         if self.verbose:
             print(f"[AssetManager] Indexed {len(self.assets)} assets from {self.base_dir}")
 
+    @staticmethod
+    def _model_path(meta_path: str, root: str, field: str, rel: Any) -> str:
+        """Join a declared model path to its asset directory, refusing one that leaves it."""
+        if not isinstance(rel, str):
+            raise ValueError(f"{meta_path}: {field} must be a string")
+        full = os.path.join(root, rel)
+        real_root = os.path.realpath(root)
+        if os.path.isabs(rel) or os.path.commonpath([real_root, os.path.realpath(full)]) != real_root:
+            raise ValueError(f"{meta_path}: {field} must stay inside the asset directory, got {rel!r}")
+        return full
+
     def _index_labels(self) -> None:
-        """Map every lowercased canonical name and alias to exactly one asset."""
+        """Map every case-folded canonical name and alias to exactly one asset."""
         labels = [(name, name) for name in self.assets]
         for name, meta in self.assets.items():
             labels += [(alias, name) for alias in meta.get("perception", {}).get("aliases", [])]
         for label, name in labels:
-            owner = self._labels.setdefault(label.lower(), name)
+            owner = self._labels.setdefault(label.casefold(), name)
             if owner != name:
-                raise ValueError(f"Label {label!r} is ambiguous: it names both {owner!r} and {name!r}")
+                raise ValueError(
+                    f"Label {label!r} is ambiguous: it names both {owner!r} ({self._meta_paths[owner]}) "
+                    f"and {name!r} ({self._meta_paths[name]})"
+                )
 
     def _load_yaml(self, path: str) -> Dict[str, Any]:
         with open(path, "r") as f:
@@ -139,4 +155,4 @@ class AssetManager:
         """
         if not isinstance(alias, str):
             raise TypeError(f"alias must be a string, got {type(alias).__name__}")
-        return self._labels.get(alias.lower())
+        return self._labels.get(alias.casefold())

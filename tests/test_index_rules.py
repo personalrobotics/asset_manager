@@ -32,6 +32,10 @@ def _registry(tmp_path, assets):
         ("perception: [cup]\n", "perception"),
         ("perception:\n  aliases: cup\n", "perception.aliases"),
         ("perception:\n  aliases: [cup, 3]\n", "perception.aliases"),
+        ("mujoco:\n  xml_path: 5\n", "mujoco.xml_path"),
+        # Model paths must stay inside the asset directory.
+        ("mujoco:\n  xml_path: ../outside.xml\n", "mujoco.xml_path"),
+        ("mujoco:\n  xml_path: /etc/hosts\n", "mujoco.xml_path"),
     ],
 )
 def test_malformed_metadata_is_refused_with_its_file(tmp_path, text, field):
@@ -50,11 +54,23 @@ def test_malformed_metadata_is_refused_with_its_file(tmp_path, text, field):
         {"a": "perception:\n  aliases: [cup]\n", "cup": "{}\n"},
         # Two canonical names differ only in case.
         {"a": "name: Cup\n", "b": "name: cup\n"},
+        # Case-insensitive comparison covers Unicode case folding.
+        {"a": "perception:\n  aliases: [Straße]\n", "b": "perception:\n  aliases: [STRASSE]\n"},
     ],
 )
 def test_ambiguous_labels_are_refused_at_index_time(tmp_path, assets):
-    with pytest.raises(ValueError, match="ambiguous"):
+    with pytest.raises(ValueError, match="ambiguous") as excinfo:
         _registry(tmp_path, assets)
+    # Both declaring files are named so the conflict can be found.
+    for directory in assets:
+        assert str(tmp_path / directory / "meta.yaml") in str(excinfo.value)
+
+
+def test_duplicate_names_are_refused_with_both_files(tmp_path):
+    with pytest.raises(ValueError, match="Duplicate") as excinfo:
+        _registry(tmp_path, {"a": "name: cup\n", "b": "name: cup\n"})
+    for directory in ["a", "b"]:
+        assert str(tmp_path / directory / "meta.yaml") in str(excinfo.value)
 
 
 def test_an_asset_may_list_its_own_name_as_an_alias(tmp_path):
