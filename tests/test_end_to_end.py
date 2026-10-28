@@ -4,7 +4,7 @@
 """End-to-end check of the registry over the repository's sample objects.
 
 The test indexes ``data/objects`` with default settings, exercises every public query,
-and checks that each sample MJCF file agrees with the ``dimensions`` declared in its
+compiles each sample MJCF file with MuJoCo, and checks that it agrees with the ``dimensions`` declared in its
 ``meta.yaml``. It writes ``artifacts/registry_summary.json``, a sorted, deterministic
 record of every asset's categories, aliases, and resolved MuJoCo path relative to the
 repository root. Set ``ASSET_MANAGER_ARTIFACTS`` to write it elsewhere.
@@ -18,6 +18,7 @@ import os
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
+import mujoco
 import pytest
 
 from asset_manager import AssetManager
@@ -66,7 +67,7 @@ def test_sample_registry(registry):
         meta = registry.get(name)
         xml_path = registry.get_path(name, "mujoco")
         assert xml_path is not None and os.path.isfile(xml_path)
-        assert ET.parse(xml_path).getroot().tag == "mujoco"
+        mujoco.MjModel.from_xml_path(xml_path)
         assert _geom_extents(xml_path) == pytest.approx(meta["dimensions"]), name
         summary[name] = {
             "category": meta.get("category", []),
