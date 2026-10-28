@@ -10,10 +10,11 @@ Comprehensive demonstration of the AssetManager capabilities:
 - Category and path queries
 - Alias resolution (perception integration)
 - Simulator-specific path resolution (MuJoCo, Isaac)
-- YAML export for debugging
+- YAML export of a subset
 """
 
 import os
+from pathlib import Path
 
 import yaml
 
@@ -24,11 +25,9 @@ def main():
     # ----------------------------------------------------------------------
     # 1️⃣ Initialize AssetManager
     # ----------------------------------------------------------------------
-    base_dir = "data/objects"
-    if not os.path.isdir(base_dir):
-        raise RuntimeError(f"Data directory not found: {base_dir}")
-
-    am = AssetManager(base_dir, verbose=True, validate_files=False)
+    # The sample objects live in the repository, next to this demo.
+    base_dir = Path(__file__).resolve().parent.parent / "data" / "objects"
+    am = AssetManager(str(base_dir), verbose=True)
 
     print("\n========== SUMMARY ==========")
     am.summary()
@@ -61,7 +60,7 @@ def main():
     print("\n========== ALIAS RESOLUTION ==========")
     aliases = ["cup", "red cup", "mug", "knife", "unknown"]
     for alias in aliases:
-        resolved = am.resolve_alias(alias, module="ycb")
+        resolved = am.resolve_alias(alias)
         print(f"Perception alias '{alias}' → {resolved}")
 
     # ----------------------------------------------------------------------
@@ -75,7 +74,7 @@ def main():
     ]
     resolved_objects = []
     for det in perception_output:
-        canonical = am.resolve_alias(det["label"], module="ycb")
+        canonical = am.resolve_alias(det["label"])
         resolved_objects.append(
             {
                 "label": det["label"],
@@ -103,10 +102,7 @@ def main():
     # ----------------------------------------------------------------------
     print("\n========== EXPORT SUBSET ==========")
     subset = {n: am.get(n) for n in am.by_category("kitchenware")}
-    out_path = "registry_kitchenware.yaml"
-    with open(out_path, "w") as f:
-        yaml.dump(subset, f)
-    print(f"Saved kitchenware subset to {out_path}")
+    print(yaml.dump(subset, sort_keys=False))
     print(f"Subset contains {len(subset)} assets: {list(subset.keys())}")
 
     # ----------------------------------------------------------------------

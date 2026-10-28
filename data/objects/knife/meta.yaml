@@ -1,4 +1,3 @@
-
 name: knife
 category: [utensil, sharp_object, tool]
 mass: 0.12
@@ -12,20 +11,8 @@ mujoco:
   xml_path: mujoco_knife.xml
   scale: 1.0
   friction: [1.5, 0.1, 0.01]
-isaac:
-  usd_path: knife.usd
-  physics_material: metal
-  collision_group: 1
 perception:
-  ycb:
-    aliases: ["knife", "Knife", "kitchen knife", "chef knife"]
-    id: 4
-  coco:
-    aliases: ["knife"]
-    category_id: 44
-  custom_detector:
-    aliases: ["knife_chef_8inch"]
-    confidence_threshold: 0.92
+  aliases: ["knife", "kitchen knife", "chef knife", "knife_chef_8inch"]
 policy:
   grasping:
     affordances: [lift, cut, slice]
