@@ -7,7 +7,7 @@ name = "asset_manager"
 version = "0.2.0"
 description = "A unified, simulator-agnostic registry for robotics assets"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 license = "MIT"
 authors = [
     {name = "Siddhartha Srinivasa", email = "siddhartha.srinivasa@gmail.com"},

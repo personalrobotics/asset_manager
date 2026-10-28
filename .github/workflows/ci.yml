@@ -17,7 +17,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.10", "3.11", "3.12"]
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
     steps:
       - uses: actions/checkout@v4
 
@@ -28,7 +28,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install dependencies
-        run: uv sync --all-extras --dev
+        run: uv sync --locked --dev
 
       - name: Ruff lint
         run: uv run ruff check .
@@ -37,22 +37,63 @@ jobs:
         run: uv run ruff format --check .
 
       - name: Pytest
-        run: |
-          if [ -d tests ]; then
-            uv run pytest tests/ -v
-          else
-            echo "No tests/ directory; skipping pytest."
-          fi
+        run: uv run pytest tests/ -v
 
-  notify-robot-code:
-    needs: test
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      - name: The demo runs from outside the repository
+        working-directory: ${{ runner.temp }}
+        run: uv run --project "$GITHUB_WORKSPACE" python "$GITHUB_WORKSPACE/demos/full_capabilities.py"
+
+      - name: Keep the registry summary
+        if: matrix.python-version == '3.12'
+        uses: actions/upload-artifact@v4
+        with:
+          name: registry-summary
+          path: artifacts/registry_summary.json
+
+  readme-example:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+
+      - name: Build the wheel and install it into a clean environment
+        run: |
+          uv build --wheel --out-dir dist
+          uv venv clean
+          uv pip install --python clean/bin/python dist/*.whl
+
+      - name: The README example runs from the installed wheel and prints its documented output
+        run: |
+          # The section's first python block is the example and the following text block is its output.
+          section() { sed -n '/^## Using the registry/,/^## /p' README.md; }
+          section | sed -n '/^```python$/,/^```$/{p;/^```$/q;}' | sed '1d;$d' > "$RUNNER_TEMP/readme_example.py"
+          section | sed -n '/^```text$/,/^```$/{p;/^```$/q;}' | sed '1d;$d' > "$RUNNER_TEMP/readme_expected.txt"
+          clean/bin/python -P "$RUNNER_TEMP/readme_example.py" | tee "$RUNNER_TEMP/readme_actual.txt"
+          diff "$RUNNER_TEMP/readme_expected.txt" "$RUNNER_TEMP/readme_actual.txt"
+
+  notify-robot-code:
+    needs: [test, readme-example]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    # Surface the token to step-level `if` (the `secrets` context isn't available
+    # in `if` directly). When it's unset, skip the dispatch with a visible notice
+    # rather than failing an otherwise-green run. A real dispatch failure with a
+    # configured token still surfaces.
+    env:
+      DISPATCH_TOKEN: ${{ secrets.ROBOT_CODE_DISPATCH_TOKEN }}
+    steps:
       - name: Dispatch integration run
+        if: env.DISPATCH_TOKEN != ''
         uses: peter-evans/repository-dispatch@v3
         with:
-          token: ${{ secrets.ROBOT_CODE_DISPATCH_TOKEN }}
+          token: ${{ env.DISPATCH_TOKEN }}
           repository: personalrobotics/robot-code
           event-type: sibling-updated
           client-payload: '{"repo":"${{ github.event.repository.name }}","sha":"${{ github.sha }}"}'
+      - name: Skip downstream dispatch (no token configured)
+        if: env.DISPATCH_TOKEN == ''
+        run: echo "::notice::ROBOT_CODE_DISPATCH_TOKEN not configured; skipping downstream dispatch. Package checks passed."
